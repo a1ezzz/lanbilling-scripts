@@ -62,7 +62,7 @@ lanbilling_scripts_args = {
 	'--vgroup-agent-id': {
 		'type': int,
 		'nargs': '?',
-		'metavar': 'vgroup_agent_id',
+		'metavar': 'agent_id',
 		'default': None
 	},
 	'--archived-vgroups': {
