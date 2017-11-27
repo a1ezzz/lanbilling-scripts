@@ -59,10 +59,10 @@ lanbilling_scripts_args = {
 		'metavar': 'login',
 		'default': None
 	},
-	'--agent-id': {
+	'--vgroup-agent-id': {
 		'type': int,
 		'nargs': '?',
-		'metavar': 'agent_id',
+		'metavar': 'vgroup_agent_id',
 		'default': None
 	},
 	'--archived-vgroups': {

@@ -151,12 +151,12 @@ class WLanbillingRPC:
 
 
 @verify_type(rpc_obj=WLanbillingRPC, from_vg_id=(int, None), to_vg_id=(int, None), from_tar_id=(int, None))
-@verify_type(to_tar_id=(int, None), login=(str, None), agent_id=(int, None), archived_vgroups=(bool, None))
+@verify_type(to_tar_id=(int, None), login=(str, None), vgroup_agent_id=(int, None), archived_vgroups=(bool, None))
 @verify_value(from_vg_id=lambda x: x is None or x >= 0, to_vg_id=lambda x: x is None or x >= 0)
 @verify_value(from_tar_id=lambda x: x is None or x >= 0, to_tar_id=lambda x: x is None or x >= 0)
-@verify_value(login=lambda x: x is None or len(x) > 0, agent_id=lambda x: x is None or x >= 0)
+@verify_value(login=lambda x: x is None or len(x) > 0, vgroup_agent_id=lambda x: x is None or x >= 0)
 def fetch_vgroups(
-	rpc_obj, from_vg_id=None, to_vg_id=None, from_tar_id=None, to_tar_id=None, login=None, agent_id=None,
+	rpc_obj, from_vg_id=None, to_vg_id=None, from_tar_id=None, to_tar_id=None, login=None, vgroup_agent_id=None,
 	archived_vgroups=None
 ):
 
@@ -169,8 +169,8 @@ def fetch_vgroups(
 		request_param['vgid'] = from_vg_id
 	if login is not None:
 		request_param['login'] = login
-	if agent_id is not None:
-		request_param['agentid'] = agent_id
+	if vgroup_agent_id is not None:
+		request_param['agentid'] = vgroup_agent_id
 	if archived_vgroups is not None:
 		request_param['archive'] = int(archived_vgroups)
 	if from_tar_id is not None and from_tar_id == to_tar_id:
@@ -194,26 +194,27 @@ def fetch_vgroups(
 	return records
 
 
-@verify_type('paranoid', from_vg_id=(int, None), to_vg_id=(int, None), login=(str, None), agent_id=(int, None))
+@verify_type('paranoid', from_vg_id=(int, None), to_vg_id=(int, None), login=(str, None), vgroup_agent_id=(int, None))
 @verify_type('paranoid', archived_vgroups=(bool, None))
 @verify_type(rpc_obj=WLanbillingRPC, from_tar_id=(int, None), to_tar_id=(int, None))
 @verify_value('paranoid', from_vg_id=lambda x: x is None or x >= 0, to_vg_id=lambda x: x is None or x >= 0)
-@verify_value('paranoid', login=lambda x: x is None or len(x) > 0, agent_id=lambda x: x is None or x >= 0)
+@verify_value('paranoid', login=lambda x: x is None or len(x) > 0, vgroup_agent_id=lambda x: x is None or x >= 0)
 @verify_value(from_tar_id=lambda x: x is None or x >= 0, to_tar_id=lambda x: x is None or x >= 0)
 def fetch_tariffs(
-	rpc_obj, from_vg_id=None, to_vg_id=None, from_tar_id=None, to_tar_id=None, login=None, agent_id=None,
+	rpc_obj, from_vg_id=None, to_vg_id=None, from_tar_id=None, to_tar_id=None, login=None, vgroup_agent_id=None,
 	archived_vgroups=None
 ):
 
 	tariff_ids = set()
 	vgroups_fetched = False
 
-	for attr in [from_vg_id, to_vg_id, login, agent_id, archived_vgroups]:
+	for attr in [from_vg_id, to_vg_id, login, vgroup_agent_id, archived_vgroups]:
 		if attr is not None:
 			vgroups_fetched = True
 			vgroups = fetch_vgroups(
 				rpc_obj, from_vg_id=from_vg_id, to_vg_id=to_vg_id, from_tar_id=from_tar_id,
-				to_tar_id=to_tar_id, login=login, agent_id=agent_id, archived_vgroups=archived_vgroups
+				to_tar_id=to_tar_id, login=login, vgroup_agent_id=vgroup_agent_id,
+				archived_vgroups=archived_vgroups
 			)
 			tariff_ids.update(map(lambda x: x['tarid'], vgroups))
 			break

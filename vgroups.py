@@ -38,12 +38,12 @@ if __name__ == '__main__':
 	)
 	parser.add_argument(
 		'--from-tar-id', help='start tarid (tariff\'s id) number. '
-		'Only those vgroups that are assigned to the specified tariffs will be exported',
+		'Only those vgroups that are assigned to specified tariffs will be exported',
 		**lanbilling_scripts_args['--from-tar-id']
 	)
 	parser.add_argument(
 		'--to-tar-id', help='end tarid (tariff\'s id)  number. '
-		'Only those vgroups that are assigned to the specified tariffs will be exported',
+		'Only those vgroups that are assigned to specified tariffs will be exported',
 		**lanbilling_scripts_args['--to-tar-id']
 	)
 	parser.add_argument(
@@ -63,9 +63,9 @@ if __name__ == '__main__':
 		**lanbilling_scripts_args['--login']
 	)
 	parser.add_argument(
-		'--agent-id', help='vgroup agent id. '
+		'--vgroup-agent-id', help='vgroup agent id. '
 		'Only those vgroups that are belongs to the specified agent will be exported',
-		**lanbilling_scripts_args['--agent-id']
+		**lanbilling_scripts_args['--vgroup-agent-id']
 	)
 
 	archive_group = parser.add_mutually_exclusive_group()
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 		for vgroup in fetch_vgroups(
 			rpc, from_vg_id=args.from_vg_id, to_vg_id=args.to_vg_id,
 			from_tar_id=args.from_tar_id, to_tar_id=args.to_tar_id,
-			login=args.login, agent_id=args.agent_id, archived_vgroups=archive_flag
+			login=args.login, vgroup_agent_id=args.vgroup_agent_id, archived_vgroups=archive_flag
 		):
 			exporter.export({x: vgroup[x] for x in vgroup})
 	finally:
