@@ -53,6 +53,12 @@ lanbilling_scripts_args = {
 		'metavar': 'vgid',
 		'default': None
 	},
+	'--tariff-type': {
+		'type': int,
+		'nargs': '?',
+		'metavar': 'tariff_type',
+		'default': None
+	},
 	'--login': {
 		'type': str,
 		'nargs': '?',
