@@ -27,6 +27,7 @@ from lanbilling_stuff.version import __author__, __version__, __credits__, __lic
 # noinspection PyUnresolvedReferences
 from lanbilling_stuff.version import __status__
 
+import zeep.exceptions
 from zeep import Client as SOAPClient
 from getpass import getpass
 
@@ -35,6 +36,24 @@ from wasp_general.config import WConfig
 
 
 class WLanbillingRPC:
+
+	class MethodProxy:
+
+		def __init__(self, lanbilling_rpc, soap_service, method_name):
+			self.lanbilling_rpc = lanbilling_rpc
+			self.soap_service = soap_service
+			self.method_name = method_name
+
+		def __call__(self, *args, **kwargs):
+			try:
+				return getattr(self.soap_service, self.method_name)(*args, **kwargs)
+			except zeep.exceptions.Fault as e:
+				if e.message != 'error_auth' or self.method_name in ('Login', 'Logout'):
+					raise
+
+			self.lanbilling_rpc.connect()
+			self.soap_service = self.lanbilling_rpc.rpc()
+			return getattr(self.soap_service, self.method_name)(*args, **kwargs)
 
 	@verify_type(hostname=(str, None), login=(str, None), password=(str, None), wsdl_url=(str, None))
 	@verify_type(soap_proxy=bool, soap_proxy_service=(str, None), soap_proxy_address=(str, None))
@@ -112,6 +131,13 @@ class WLanbillingRPC:
 		if self.__client is None:
 			self.connect()
 		return self._rpc()
+
+	def __getattr__(self, item):
+		try:
+			return object.__getattribute__(self, item)
+		except AttributeError:
+			pass
+		return WLanbillingRPC.MethodProxy(self, self.rpc(), item)
 
 	@classmethod
 	@verify_type(config=WConfig, section_name=str, password_prompt=bool)
@@ -192,43 +218,3 @@ def fetch_vgroups(
 			records = filter(lambda x: x['tarid'] <= to_tar_id, records)
 
 	return records
-
-
-@verify_type('paranoid', from_vg_id=(int, None), to_vg_id=(int, None), login=(str, None), vgroup_agent_id=(int, None))
-@verify_type('paranoid', archived_vgroups=(bool, None))
-@verify_type(rpc_obj=WLanbillingRPC, from_tar_id=(int, None), to_tar_id=(int, None))
-@verify_value('paranoid', from_vg_id=lambda x: x is None or x >= 0, to_vg_id=lambda x: x is None or x >= 0)
-@verify_value('paranoid', login=lambda x: x is None or len(x) > 0, vgroup_agent_id=lambda x: x is None or x >= 0)
-@verify_value(from_tar_id=lambda x: x is None or x >= 0, to_tar_id=lambda x: x is None or x >= 0)
-def fetch_tariffs(
-	rpc_obj, from_vg_id=None, to_vg_id=None, from_tar_id=None, to_tar_id=None, login=None, vgroup_agent_id=None,
-	archived_vgroups=None
-):
-
-	tariff_ids = set()
-	vgroups_fetched = False
-
-	for attr in [from_vg_id, to_vg_id, login, vgroup_agent_id, archived_vgroups]:
-		if attr is not None:
-			vgroups_fetched = True
-			vgroups = fetch_vgroups(
-				rpc_obj, from_vg_id=from_vg_id, to_vg_id=to_vg_id, from_tar_id=from_tar_id,
-				to_tar_id=to_tar_id, login=login, vgroup_agent_id=vgroup_agent_id,
-				archived_vgroups=archived_vgroups
-			)
-			tariff_ids.update(map(lambda x: x['tarid'], vgroups))
-			break
-
-	if vgroups_fetched is False:
-		if from_tar_id is not None and from_tar_id == to_tar_id:
-			tariff_ids.add(from_tar_id)
-		else:
-			tariff_ids = map(lambda x: x['id'], rpc_obj.rpc().getTarifs())
-			if from_tar_id is not None:
-				tariff_ids = filter(lambda x: x >= from_tar_id, tariff_ids)
-			if to_tar_id is not None:
-				tariff_ids = filter(lambda x: x <= to_tar_id, tariff_ids)
-
-	result = map(lambda x: rpc_obj.rpc().getTarif(x), tariff_ids)
-	result = filter(lambda x: len(x) == 1, result)
-	return map(lambda x: x[0], result)
