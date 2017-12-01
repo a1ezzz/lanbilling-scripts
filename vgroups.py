@@ -87,7 +87,7 @@ if __name__ == '__main__':
 		archive_flag = False
 
 	if args.from_tar_id is not None and args.to_tar_id is not None:
-		if args.from_tarid > args.to_tarid:
+		if args.from_tar_id > args.to_tar_id:
 			raise ValueError('"from-tar-id" is greater then "to-tar-id"')
 
 	if args.from_vg_id is not None and args.to_vg_id is not None:
