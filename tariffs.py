@@ -27,8 +27,9 @@ import argparse
 from wasp_general.config import WConfig
 from wasp_general.csv import WCSVExporter
 
-from lanbilling_stuff.rpc import WLanbillingRPC, fetch_tariffs
+from lanbilling_stuff.rpc import WLanbillingRPC
 from lanbilling_stuff.scripts_args import lanbilling_scripts_args
+from lanbilling_stuff.tariff import fetch_tariffs
 
 
 if __name__ == '__main__':
@@ -46,6 +47,11 @@ if __name__ == '__main__':
 		'--to-tar-id', help='end tarid (tariff\'s id)  number. '
 		'Only those tariffs whose id are inside the selection will be exported',
 		**lanbilling_scripts_args['--to-tar-id']
+	)
+
+	parser.add_argument(
+		'--tariff-type', help='Search end export the specified tariff type only',
+		**lanbilling_scripts_args['--tariff-type']
 	)
 
 	parser.add_argument(
@@ -72,10 +78,12 @@ if __name__ == '__main__':
 
 	archive_group = parser.add_mutually_exclusive_group()
 	archive_group.add_argument(
-		'--archived-vgroups', help='deleted vgroups', **lanbilling_scripts_args['--archived-vgroups']
+		'--archived-vgroups', help='Select and export tariffs that are assigned to archived vgroups only',
+		**lanbilling_scripts_args['--archived-vgroups']
 	)
 	archive_group.add_argument(
-		'--non-archived-vgroups', help='not deleted vgroups',
+		'--non-archived-vgroups', help='Select and export tariffs that are assigned to vgroups '
+		'which are not archived',
 		**lanbilling_scripts_args['--non-archived-vgroups']
 	)
 
@@ -88,7 +96,7 @@ if __name__ == '__main__':
 		archive_flag = False
 
 	if args.from_tar_id is not None and args.to_tar_id is not None:
-		if args.from_tarid > args.to_tarid:
+		if args.from_tar_id > args.to_tar_id:
 			raise ValueError('"from-tar-id" is greater then "to-tar-id"')
 
 	if args.from_vg_id is not None and args.to_vg_id is not None:
@@ -103,7 +111,7 @@ if __name__ == '__main__':
 		exporter = WCSVExporter(sys.stdout)
 		exporter.omit_field('catnumbers')
 		for tariff in fetch_tariffs(
-			rpc, from_vg_id=args.from_vg_id, to_vg_id=args.to_vg_id,
+			rpc, from_vg_id=args.from_vg_id, to_vg_id=args.to_vg_id, tariff_type=args.tariff_type,
 			from_tar_id=args.from_tar_id, to_tar_id=args.to_tar_id,
 			login=args.login, vgroup_agent_id=args.vgroup_agent_id, archived_vgroups=archive_flag
 		):
