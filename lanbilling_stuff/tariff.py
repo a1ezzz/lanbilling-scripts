@@ -27,11 +27,13 @@ from lanbilling_stuff.version import __author__, __version__, __credits__, __lic
 # noinspection PyUnresolvedReferences
 from lanbilling_stuff.version import __status__
 
+from datetime import datetime
+
 from wasp_general.verify import verify_type, verify_value
 from wasp_general.csv import WCSVExporter
 
 from lanbilling_stuff.rpc import WLanbillingRPC
-from lanbilling_stuff.rpc import fetch_vgroups
+from lanbilling_stuff.vgroup import fetch_vgroups
 
 
 @verify_type('paranoid', from_vg_id=(int, None), to_vg_id=(int, None), login=(str, None), vgroup_agent_id=(int, None))
@@ -78,10 +80,24 @@ def fetch_tariffs(
 	return result
 
 
+@verify_type(rpc_obj=WLanbillingRPC)
+def assign_tariff(rpc_obj, vg_id, agent_id, tariff_id):
+	rpc_obj.insupdTarifsRasp(0, {
+		'recordid': 0,
+		'vgid': vg_id,
+		'groupid': 0,
+		'id': agent_id,
+		'taridnew': tariff_id,
+		'taridold': 0,
+		'requestby': rpc_obj.login(),
+		'changetime': datetime.now().strftime('%Y-%m-%d 00:00:00')
+	})
+
+
 class TariffCloneGenerator:
 
 	@verify_type(rpc=WLanbillingRPC, tariff_type=int)
-	@verify_value(tariff_type=lambda x: x > 0)
+	@verify_value(tariff_type=lambda x: x >= 0)
 	def __init__(self, rpc, tariff_type):
 		self.__rpc = rpc
 		self.__tariff_type = tariff_type
@@ -141,11 +157,27 @@ class TariffCloneGenerator:
 	def clone_tariff(self, tariff):
 		return self.rpc().insupdTarif(0, self.clone_request(tariff))
 
+	def find_equal(self, tariff):
+		if self.supported_tariff(tariff) is False:
+			raise ValueError('Unsupported tariff spotted (tar_id=%i)' % tariff)
+
+		equal_tariff = None
+		for check_t in self.current_tariffs():
+			if self.compare_tariffs(tariff, check_t) is True:
+				if self.supported_tariff(check_t) is True:
+					equal_tariff = check_t
+					break
+				else:
+					print(
+						'Skipping unsupported tariff with tar_id=%i' %
+						check_t['tarif']['tarid']
+					)
+		return equal_tariff
+
 	@verify_type(report_filename=(str, None))
 	@verify_value(report_filename=lambda x: x is None or len(x) > 0)
 	def clone(self, original_tariffs, report_filename=None):
 		tariff_type = self.tariff_type()
-		current_tariffs = self.current_tariffs()
 
 		if report_filename is None:
 			report_filename = '/dev/null'
@@ -164,21 +196,7 @@ class TariffCloneGenerator:
 				})
 				continue
 
-			if self.supported_tariff(original_t) is False:
-				raise ValueError('Unsupported tariff spotted (tar_id=%i)' % original_id)
-
-			equal_tariff = None
-			for check_t in current_tariffs:
-				if self.compare_tariffs(original_t, check_t) is True:
-					if self.supported_tariff(check_t) is True:
-						equal_tariff = check_t
-						break
-					else:
-						print(
-							'Skipping unsupported tariff with tar_id=%i' %
-							check_t['tarif']['tarid']
-						)
-
+			equal_tariff = self.find_equal(original_t)
 			if equal_tariff is None:
 				print('Tariff with tar_id=%i will be cloned' % original_id)
 				clone_id = self.clone_tariff(original_t)
@@ -204,7 +222,7 @@ class TariffCloneGenerator:
 class TariffPrefixCloneGenerator(TariffCloneGenerator):
 
 	@verify_type('paranoid', rpc=WLanbillingRPC, tariff_type=int)
-	@verify_value('paranoid', tariff_type=lambda x: x > 0)
+	@verify_value('paranoid', tariff_type=lambda x: x >= 0)
 	@verify_type(prefix=(str, None))
 	def __init__(self, rpc, tariff_type, prefix=None):
 		TariffCloneGenerator.__init__(self, rpc, tariff_type)
