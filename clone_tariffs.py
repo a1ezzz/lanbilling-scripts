@@ -24,7 +24,6 @@ import os
 import argparse
 
 from wasp_general.config import WConfig
-from wasp_general.csv import WCSVExporter
 
 from lanbilling_stuff.rpc import WLanbillingRPC
 from lanbilling_stuff.scripts_args import lanbilling_scripts_args
@@ -44,7 +43,7 @@ if __name__ == '__main__':
 	)
 
 	parser.add_argument(
-		'--destination-type', help='Destination tariff type to which tariff must be cloned', type=int,
+		'--destination-tariff-type', help='Destination tariff type to which tariff must be cloned', type=int,
 		metavar='tariff_type', required=True
 	)
 
@@ -131,7 +130,7 @@ if __name__ == '__main__':
 		))
 		print('%i selected tariffs was fetched' % len(source_tariffs))
 		c_generator = TariffPrefixCloneGenerator(
-			rpc, args.destination_type, prefix=args.destination_tariff_prefix
+			rpc, args.destination_tariff_type, prefix=args.destination_tariff_prefix
 		)
 		print('%i tariffs with destination type was fetched' % len(c_generator.current_tariffs()))
 		c_generator.clone(source_tariffs, report_filename=args.export_report)
