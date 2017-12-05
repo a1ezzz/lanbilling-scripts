@@ -75,9 +75,13 @@ def fetch_vgroups(
 	return records
 
 
+@verify_type(rpc_obj=WLanbillingRPC, vg_id=int, agent_id=int)
+@verify_value(vg_id=lambda x: x >= 0, agent_id=lambda x: x >= 0)
 def disable_vgroup(rpc_obj, vg_id, agent_id):
 	rpc_obj.insBlkRasp({'recordid': 0, 'vgid': vg_id, 'id': agent_id, 'blkreq': 10})
 
 
+@verify_type(rpc_obj=WLanbillingRPC, vg_id=int, agent_id=int)
+@verify_value(vg_id=lambda x: x >= 0, agent_id=lambda x: x >= 0)
 def unblock_vgroup(rpc_obj, vg_id, agent_id):
 	rpc_obj.insBlkRasp({'recordid': 0, 'vgid': vg_id, 'id': agent_id, 'blkreq': 0})
