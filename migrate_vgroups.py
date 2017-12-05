@@ -37,6 +37,7 @@ from lanbilling_stuff.scripts_args import lanbilling_scripts_args
 def supported_vgroup(vgroup):
 	for attr in ('services', 'addons', 'macstaff', 'telstaff', 'staff', 'blockrasp', 'tarrasp'):
 		if vgroup[attr] != []:
+			print('Vgroup attribute "%s" has invalid value - %s' % (attr, vgroup[attr]))
 			return False
 	if vgroup['vgroup']['parentvgid'] != 0:
 		return False
