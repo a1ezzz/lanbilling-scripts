@@ -27,7 +27,8 @@ import argparse
 from wasp_general.config import WConfig
 from wasp_general.csv import WCSVExporter
 
-from lanbilling_stuff.rpc import WLanbillingRPC, fetch_vgroups
+from lanbilling_stuff.rpc import WLanbillingRPC
+from lanbilling_stuff.vgroup import fetch_vgroups
 from lanbilling_stuff.scripts_args import lanbilling_scripts_args
 
 
